@@ -16,7 +16,7 @@ jobs:
       - name: Run a multi-line script
         run: |
           sudo apt update
-          sudo apt install qemu-user-static gzip -y
+          sudo apt install qemu-user-static binfmt-support zip gzip -y
           chmod +x mate-test.sh
           chmod +x create_release.sh
           ./mate-test.sh
