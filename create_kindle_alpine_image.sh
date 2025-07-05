@@ -1,9 +1,24 @@
 #!/usr/bin/env bash
+
+# DEPENDENCIES
+# qemu-user-static is required to run arm software using the "qemu-arm-static" command (I suppose you use this script on a X86_64 computer)
+# Please install it via your package manager (e.g. Ubuntu) or whatever way is appropriate for your distribution (Arch has it in AUR)
+
+# BASIC CONIGURATION
+# REPO: The Alpine repository to use, you can leave it like it is
+# MNT: Where you want to mount the image, just make sure /mnt/alpine isn't already used
+# IMAGE: The path and name of the image file to be created, you can leave it as is
+# IMAGESIZE: How big you want the image to be. If you want to install Chromium, a evince etc. you should go for at least 1400MB
+# ALPINESETUP: This are the commands executed inside the Alpine container to set it up. Most notably it installs XFCE desktop environment,
+#              and creates a user named "alpine" with password "alpine". The last command is "sh", which allows you to examine the
+#              created image/install more packages/whatever. To finish the script just leave the sh shell with "exit"
+# STARGUI: This is the script that gets executed inside the container when the GUI is started. Xepyhr is used to render the desktop
+#          inside a window, that has the correct name to be displayed in fullscreen by the kindle's awesome windowmanager
 REPO="http://dl-cdn.alpinelinux.org/alpine"
 REV="v3.19"
 MNT="/mnt/alpine"
 IMAGE="./alpine.ext3"
-IMAGESIZE=3096 #Megabytes
+IMAGESIZE=2048 #Megabytes
 ALPINESETUP="source /etc/profile
 echo kindle > /etc/hostname
 echo \"nameserver 8.8.8.8\" > /etc/resolv.conf
@@ -11,11 +26,21 @@ mkdir /run/dbus
 apk update
 apk upgrade
 cat /etc/alpine-release
-apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git seatd xdg-desktop-portal-phosh phosh-wallpapers phosh-mobile-settings squeekboard phoc phosh-portalsconf phosh-mobile-settings-lang phosh-lang libphosh
+apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git
+apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/community/ gnome-themes-extra gnome-themes-extra-lang
+#apk add --update --no-cache gnome-themes-extra gnome-themes-extra-lang
 apk add desktop-file-utils gtk-engines consolekit gtk-murrine-engine caja caja-extensions marco
-apk add \$(apk search phosh -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
+apk add \$(apk search mate -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
 apk add \$(apk search -q ttf- | grep -v '\-doc')
-apk add onboard chromium
+#apk add onboard chromium
+apk add onboard
+
+#apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.17/community/ onboard
+#apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.17/main/ cjson numactl mbedtls aom dav1d flac libffi icu libcrypto3 icu-libs
+apk add --update --no-cache cjson numactl mbedtls aom dav1d flac libffi icu libcrypto3 icu-libs
+apk add --update --no-cache libressl x265 librsvg
+apk add --update --no-cache  --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community/ chromium
+
 adduser alpine -D
 echo -e \"alpine\nalpine\" | passwd alpine
 echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
@@ -37,12 +62,17 @@ mouseid=\"\$(env DISPLAY=:1 xinput list --id-only \"Xephyr virtual mouse\")\"
 CHROMIUM_FLAGS='\''--force-device-scale-factor=2 --touch-devices='\''\$mouseid'\'' --pull-to-refresh=1 --disable-smooth-scrolling --enable-low-end-device-mode --disable-login-animations --disable-modal-animations --wm-window-animations-disabled --start-maximized --user-agent=Mozilla%2F5.0%20%28Linux%3B%20Android%207.0%3B%20SM-G930V%20Build%2FNRD90M%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F59.0.3071.125%20Mobile%20Safari%2F537.36'\''' > /etc/chromium/chromium.conf
 mkdir -p /usr/share/chromium/extensions
 
+# Install uBlock Origin
+#echo '{
+#	\"external_update_url\": \"https://clients2.google.com/service/update2/crx\"
+#}' > /usr/share/chromium/extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm.json
+
 echo \"You're now dropped into an interactive shell in Alpine, feel free to explore and type exit to leave.\"
 sh"
 STARTGUI='#!/bin/sh
 chmod a+w /dev/shm # Otherwise the alpine user cannot use this (needed for chromium)
 SIZE=$(xwininfo -root -display :0 | egrep "geometry" | cut -d " "  -f4)
-env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 phosh-session"
+env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 mate-session"
 killall Xephyr'
 
 
@@ -106,7 +136,7 @@ echo "$REPO/$REV/main/
 $REPO/$REV/community/
 
 #Here comes a hack because Chromium isn't in edge
-$REPO/latest-stable/community" > "$MNT/etc/apk/repositories"
+#$REPO/latest-stable/community" > "$MNT/etc/apk/repositories"
 
 # Create the script to start the gui
 echo "$STARTGUI" > "$MNT/startgui.sh"
