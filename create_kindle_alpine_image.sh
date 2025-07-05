@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 REPO="http://dl-cdn.alpinelinux.org/alpine"
-REV="v3.22"
+REV="v3.19"
 MNT="/mnt/alpine"
 IMAGE="./alpine.ext3"
 IMAGESIZE=3096 #Megabytes
