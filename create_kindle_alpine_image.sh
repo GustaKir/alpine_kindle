@@ -31,7 +31,7 @@ apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v
 apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/community/ gnome-themes-extra gnome-themes-extra-lang
 apk add \$(apk search mate -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
 apk add \$(apk search -q ttf- | grep -v '\-doc')
-apk add onboard midori
+apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.18/community/ onboard midori
 adduser alpine -D
 echo -e \"alpine\nalpine\" | passwd alpine
 echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
