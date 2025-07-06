@@ -8,7 +8,7 @@ if [ "$(mount | grep /tmp/alpine)" ] ; then
    else
 	echo "Mounting Alpine rootfs"
 	mkdir -p /tmp/alpine
-	mount -o loop,noatime -t ext3 /mnt/base-us/alpine.ext3 /tmp/alpine
+	mount -o loop,noatime -t ext4 /mnt/base-us/alpine.ext4 /tmp/alpine
 	mount -o bind /dev /tmp/alpine/dev
 	mount -o bind /dev/pts /tmp/alpine/dev/pts
 	mount -o bind /proc /tmp/alpine/proc
