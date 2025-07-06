@@ -15,7 +15,6 @@
 # STARGUI: This is the script that gets executed inside the container when the GUI is started. Xepyhr is used to render the desktop
 #          inside a window, that has the correct name to be displayed in fullscreen by the kindle's awesome windowmanager
 REPO="http://dl-cdn.alpinelinux.org/alpine"
-REV="v3.19"
 MNT="/mnt/alpine"
 IMAGE="./alpine.ext3"
 IMAGESIZE=2048 #Megabytes
@@ -26,20 +25,11 @@ mkdir /run/dbus
 apk update
 apk upgrade
 cat /etc/alpine-release
-apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git
-apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/community/ gnome-themes-extra gnome-themes-extra-lang
-#apk add --update --no-cache gnome-themes-extra gnome-themes-extra-lang
-apk add desktop-file-utils gtk-engines consolekit gtk-murrine-engine caja caja-extensions marco
-apk add \$(apk search mate -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
-apk add \$(apk search -q ttf- | grep -v '\-doc')
-#apk add onboard chromium
-apk add onboard
 
-#apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.17/community/ onboard
-#apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.17/main/ cjson numactl mbedtls aom dav1d flac libffi icu libcrypto3 icu-libs
-apk add --update --no-cache cjson numactl mbedtls aom dav1d flac libffi icu libcrypto3 icu-libs
-apk add --update --no-cache libressl x265 librsvg
-apk add --update --no-cache  --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community/ chromium
+apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git seatd xdg-desktop-portal-phosh phosh-wallpapers phosh-mobile-settings phoc phosh-portalsconf phosh-mobile-settings-lang phosh-lang libphosh
+apk add desktop-file-utils gtk-engines gtk-murrine-engine caja caja-extensions marco
+apk add \$(apk search phosh -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
+apk add onboard firefox
 
 adduser alpine -D
 echo -e \"alpine\nalpine\" | passwd alpine
@@ -54,25 +44,12 @@ git reset --hard origin/master
 dconf load /org/mate/ < ~/.config/org_mate.dconf.dump
 dconf load /org/onboard/ < ~/.config/org_onboard.dconf.dump\"
 
-echo '# Default settings for chromium. This file is sourced by /bin/sh from
-# the chromium launcher.
-
-# Options to pass to chromium.
-mouseid=\"\$(env DISPLAY=:1 xinput list --id-only \"Xephyr virtual mouse\")\"
-CHROMIUM_FLAGS='\''--force-device-scale-factor=2 --touch-devices='\''\$mouseid'\'' --pull-to-refresh=1 --disable-smooth-scrolling --enable-low-end-device-mode --disable-login-animations --disable-modal-animations --wm-window-animations-disabled --start-maximized --user-agent=Mozilla%2F5.0%20%28Linux%3B%20Android%207.0%3B%20SM-G930V%20Build%2FNRD90M%29%20AppleWebKit%2F537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome%2F59.0.3071.125%20Mobile%20Safari%2F537.36'\''' > /etc/chromium/chromium.conf
-mkdir -p /usr/share/chromium/extensions
-
-# Install uBlock Origin
-#echo '{
-#	\"external_update_url\": \"https://clients2.google.com/service/update2/crx\"
-#}' > /usr/share/chromium/extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm.json
-
 echo \"You're now dropped into an interactive shell in Alpine, feel free to explore and type exit to leave.\"
 sh"
 STARTGUI='#!/bin/sh
 chmod a+w /dev/shm # Otherwise the alpine user cannot use this (needed for chromium)
 SIZE=$(xwininfo -root -display :0 | egrep "geometry" | cut -d " "  -f4)
-env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 mate-session"
+env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 phosh-session"
 killall Xephyr'
 
 
@@ -86,13 +63,13 @@ killall Xephyr'
 # read in the APKINDEX what version it is currently to get the correct download link. It is extracted in /tmp and deleted
 # again at the end of the script
 echo "Determining version of apk-tools-static"
-curl "$REPO/$REV/main/armhf/APKINDEX.tar.gz" --output /tmp/APKINDEX.tar.gz
+curl "$REPO/latest-stable/main/armhf/APKINDEX.tar.gz" --output /tmp/APKINDEX.tar.gz
 tar -xzf /tmp/APKINDEX.tar.gz -C /tmp
 APKVER="$(cut -d':' -f2 <<<"$(grep -A 5 "P:apk-tools-static" /tmp/APKINDEX | grep "V:")")" # Grep for the version in APKINDEX
 rm /tmp/APKINDEX /tmp/APKINDEX.tar.gz /tmp/DESCRIPTION # Remove what we downloaded and extracted
 echo "Version of apk-tools-static is: $APKVER"
 echo "Downloading apk-tools-static"
-curl "$REPO/$REV/main/armv7/apk-tools-static-$APKVER.apk" --output "/tmp/apk-tools-static.apk"
+curl "$REPO/latest-stable/main/armv7/apk-tools-static-$APKVER.apk" --output "/tmp/apk-tools-static.apk"
 tar -xzf "/tmp/apk-tools-static.apk" -C /tmp # extract apk-tools-static to /tmp
 
 
@@ -117,7 +94,7 @@ mount -o loop -t ext3 "$IMAGE" "$MNT"
 # mounted image. We use the arm-version of it to end up with a root filesystem for arm. Also the "edge" repository is used
 # to end up with the newest software, some of which is very useful for Kindles
 echo "Bootstrapping Alpine"
-qemu-arm-static /tmp/sbin/apk.static -X "$REPO/$REV/main" -U --allow-untrusted --root "$MNT" --initdb add alpine-base
+qemu-arm-static /tmp/sbin/apk.static -X "$REPO/edge/main" -U --allow-untrusted --root "$MNT" --initdb add alpine-base
 
 
 # COMPLETE IMAGE MOUNTING FOR CHROOT
@@ -132,12 +109,11 @@ mount -o bind /sys "$MNT/sys"
 cp /etc/resolv.conf "$MNT/etc/resolv.conf" # Copy resolv from host for internet connection
 # Configure repositories for apk (edge main+community+testing for lots of useful and up-to-date software)
 mkdir -p "$MNT/etc/apk"
-echo "$REPO/$REV/main/
-$REPO/$REV/community/
-
+echo "$REPO/edge/main/
+$REPO/edge/community/
+$REPO/edge/testing/
 #Here comes a hack because Chromium isn't in edge
-#$REPO/latest-stable/community" > "$MNT/etc/apk/repositories"
-
+$REPO/latest-stable/community" > "$MNT/etc/apk/repositories"
 # Create the script to start the gui
 echo "$STARTGUI" > "$MNT/startgui.sh"
 chmod +x "$MNT/startgui.sh"
