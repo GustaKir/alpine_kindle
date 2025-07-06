@@ -40,7 +40,10 @@ cat /etc/alpine-release
 apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git
 apk add gtk-engines gtk-murrine-engine marco
 
-apk add --update --no-cache --repository=https://mirror.postmarketos.org/postmarketos/master postmarketos-ui-plasma-mobile
+apk add --update --no-cache --repository=https://mirror.postmarketos.org/postmarketos/master --allow-untrusted postmarketos-keys
+apk update
+apk upgrade
+apk add --update --no-cache --repository=https://mirror.postmarketos.org/postmarketos/master --allow-untrusted postmarketos-ui-plasma-mobile
 
 apk add onboard
 adduser alpine -D
