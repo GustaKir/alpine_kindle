@@ -16,7 +16,7 @@
 #          inside a window, that has the correct name to be displayed in fullscreen by the kindle's awesome windowmanager
 REPO="http://dl-cdn.alpinelinux.org/alpine"
 MNT="/mnt/alpine"
-IMAGE="./alpine.ext3"
+IMAGE="./alpine.ext4"
 IMAGESIZE=3072 #Megabytes
 ALPINESETUP="source /etc/profile
 echo kindle > /etc/hostname
@@ -80,7 +80,7 @@ tar -xzf "/tmp/apk-tools-static.apk" -C /tmp # extract apk-tools-static to /tmp
 # Also automatic checks are disabled using tune2fs
 echo "Creating image file"
 dd if=/dev/zero of="$IMAGE" bs=1M count=$IMAGESIZE
-mkfs.ext3 "$IMAGE"
+mkfs.ext4 "$IMAGE"
 tune2fs -i 0 -c 0 "$IMAGE"
 
 
@@ -88,7 +88,7 @@ tune2fs -i 0 -c 0 "$IMAGE"
 # The mountpoint is created (doesn't matter if it exists already) and the empty ext3-filsystem is mounted in it
 echo "Mounting image"
 mkdir -p "$MNT"
-mount -o loop -t ext3 "$IMAGE" "$MNT"
+mount -o loop -t ext4 "$IMAGE" "$MNT"
 
 
 # BOOTSTRAPPING ALPINE
