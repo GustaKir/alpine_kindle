@@ -38,12 +38,11 @@ apk upgrade
 cat /etc/alpine-release
 
 apk add xorg-server-xephyr xwininfo xdotool xinput dbus-x11 sudo bash nano git
-apk add gtk-engines gtk-murrine-engine marco
+apk add desktop-file-utils gtk-engines gtk-murrine-engine caja caja-extensions marco
+apk add --update --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.16/community/ gnome-themes-extra
 
-apk add --update --no-cache --repository=https://mirror.postmarketos.org/postmarketos/master --allow-untrusted postmarketos-keys
-apk update
-apk upgrade
-apk add --update --no-cache --repository=https://mirror.postmarketos.org/postmarketos/master --allow-untrusted postmarketos-ui-plasma-mobile
+apk add \$(apk search mate -q | grep -v '\-dev' | grep -v '\-lang' | grep -v '\-doc')
+apk add \$(apk search -q ttf- | grep -v '\-doc')
 
 apk add onboard
 adduser alpine -D
@@ -52,12 +51,22 @@ echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 addgroup sudo
 addgroup alpine sudo
 su alpine -c \"cd ~
-sh"
+git init
+git remote add origin https://github.com/schuhumi/alpine_kindle_dotfiles
+git pull origin master
+git reset --hard origin/master
+dconf load /org/mate/ < ~/.config/org_mate.dconf.dump
+dconf load /org/onboard/ < ~/.config/org_onboard.dconf.dump\"
 
+echo '# Default settings for chromium. This file is sourced by /bin/sh from
+# the chromium launcher.
+
+echo \"You're now dropped into an interactive shell in Alpine, feel free to explore and type exit to leave.\"
+sh"
 STARTGUI='#!/bin/sh
 chmod a+w /dev/shm # Otherwise the alpine user cannot use this (needed for chromium)
 SIZE=$(xwininfo -root -display :0 | egrep "geometry" | cut -d " "  -f4)
-env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 startplasma-x11"
+env DISPLAY=:0 Xephyr :1 -title "L:D_N:application_ID:xephyr" -ac -br -screen $SIZE -cc 4 -reset -terminate & sleep 3 && su alpine -c "env DISPLAY=:1 mate-session"
 killall Xephyr'
 
 
